@@ -1,0 +1,6 @@
+[
+    {
+        "name": "Avr library kit",
+        "toolchainFile": "/path/to/emscripten/toolchain.cmake"
+    }
+]

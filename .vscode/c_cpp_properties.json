@@ -1,0 +1,37 @@
+{
+    "env": {
+        "projectIncludePath": [
+            "${workspaceFolder}/src/"
+        ],
+        "myCompilerPath": "/usr/local/bin/gcc-7"
+    },
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/usr/avr/include",
+                "${projectIncludePath}"
+            ],
+            "defines": [
+                "__AVR_ATmega8__"
+            ],
+            "intelliSenseMode": "clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "compilerPath": "/usr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega8",
+                ""
+            ],
+            "forcedInclude": [
+                "/usr/avr/include/avr/iom8.h"
+            ],
+            "browse": {
+                "path": ["${workspaceFolder}"],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 4
+}

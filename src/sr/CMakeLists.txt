@@ -1,0 +1,10 @@
+add_avr_library(
+   avr-shift-registers
+   util.c
+   shift_register.c
+   piso_shift_register.c
+   sipo_shift_register.c
+   data_position.c
+   shift_register_internal.h
+   seduce.h
+)
