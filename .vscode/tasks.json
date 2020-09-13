@@ -25,6 +25,17 @@
                 "cwd": "${workspaceFolder}/simavr"
             },
             "group": "none"
+        },
+        {
+            "label": "Show gtkwave",
+            "type": "process",
+            "command": "gtkwave",
+            "args": ["simavr_shift_registers_trace.vcd"],
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/simavr"
+            },
+            "group": "none"
         }
     ]
 }
