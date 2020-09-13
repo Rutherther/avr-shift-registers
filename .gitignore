@@ -42,3 +42,9 @@ latex/
 *.elf
 *.lst
 *.map
+
+commands.gdb
+*_trace.c
+*.vcd
+*elf_launch.gdb.sh
+*elf.commands.gdb
