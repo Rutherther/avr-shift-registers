@@ -1,0 +1,30 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Simavr",
+            "type": "shell",
+            "command": "make simavr_shift_registers",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/simavr"
+            }
+        },
+        {
+            "label": "Run simavr",
+            "type": "shell",
+            "command": "make sim_simavr_shift_registers",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/simavr"
+            },
+            "group": "none"
+        }
+    ]
+}
