@@ -37,3 +37,8 @@ build/
 # doxygen
 html/
 latex/
+
+*.hex
+*.elf
+*.lst
+*.map

@@ -11,7 +11,7 @@ ShiftRegisterHandle avr_sipo_shift_register_create(
     int waitTime
 )
 {
-    SipoShiftRegister* shiftRegister = (SipoShiftRegister*) calloc(1, sizeof(SipoShiftRegister));
+    SipoShiftRegister* shiftRegister = (SipoShiftRegister*) malloc(sizeof(SipoShiftRegister));
 
     shiftRegister->input = input;
     shiftRegister->outputEnable = outputEnable;

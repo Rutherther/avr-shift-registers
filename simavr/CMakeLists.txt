@@ -40,39 +40,47 @@ message(STATUS "Set CMAKE_FIND_ROOT_PATH to ${CMAKE_FIND_ROOT_PATH}")
 message(STATUS "Set CMAKE_SYSTEM_INCLUDE_PATH to ${CMAKE_SYSTEM_INCLUDE_PATH}")
 message(STATUS "Set CMAKE_SYSTEM_LIBRARY_PATH to ${CMAKE_SYSTEM_LIBRARY_PATH}")
 
-if(CMAKE_BUILD_TYPE MATCHES Release)
-   set(CMAKE_C_FLAGS_RELEASE "-Os")
-   set(CMAKE_CXX_FLAGS_RELEASE "-Os")
-endif(CMAKE_BUILD_TYPE MATCHES Release)
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-   set(CMAKE_C_FLAGS_DEBUG "-O0 -save-temps -g -gdwarf-3 -gstrict-dwarf")
-   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -save-temps -g -gdwarf-3 -gstrict-dwarf")
-endif(CMAKE_BUILD_TYPE MATCHES Debug)
+set(CMAKE_C_FLAGS_RELEASE "-O3 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 
 add_definitions("-DF_CPU=${MCU_SPEED}")
 add_definitions("-fpack-struct")
 add_definitions("-fshort-enums")
 add_definitions("-Wall")
-add_definitions("-Werror")
+# add_definitions("-Werror")
 # http://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/Alternate-Keywords.html#Alternate-Keywords
 # [...]-pedantic and other options cause warnings for many GNU C extensions. You can prevent such warnings within
 # one expression by writing __extension__ before the expression. __extension__ has no effect aside from this.[...] 
-add_definitions("-pedantic")
-add_definitions("-pedantic-errors")
-add_definitions("-funsigned-char")
-add_definitions("-funsigned-bitfields")
-add_definitions("-ffunction-sections")
-add_definitions("-c")
-add_definitions("-std=gnu99")
+ add_definitions("-pedantic")
+ add_definitions("-pedantic-errors")
+ add_definitions("-funsigned-char")
+ add_definitions("-funsigned-bitfields")
+ add_definitions("-ffunction-sections")
+ add_definitions("-c")
+ add_definitions("-std=gnu99")
 
 add_subdirectory(../ src/sr)
 
-add_avr_executable(
-    simavr-shift-registers
-    main.c
+add_vcd_trace(
+  simavr_shift_registers
+  "SIPO_SRCLR,0,PORTB"
+  "SIPO_SRCLK,1,PORTB"
+  "SIPO_SER,2,PORTB"
+  "SIPO_OE,3,PORTB"
+  "SIPO_RCLK,4,PORTB"
+  "DDR_SIPO_SRCLR,0,DDRB"
+  "DDR_SIPO_SRCLK,1,DDRB"
+  "DDR_SIPO_SER,2,DDRB"
+  "DDR_SIPO_OE,3,DDRB"
+  "DDR_SIPO_RCLK,4,DDRB"
 )
 
-avr_target_include_directories(simavr-shift-registers PRIVATE ../src)
+include_directories(../src)
 
-avr_target_link_libraries(simavr-shift-registers avr-shift-registers)
+add_avr_executable(
+    simavr_shift_registers
+    main.c
+    ${simavr_shift_registers_VCD_TRACE_FILE}
+)
+
+avr_target_link_libraries(simavr_shift_registers avr_shift_registers)

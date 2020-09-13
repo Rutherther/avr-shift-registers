@@ -1,5 +1,5 @@
 add_avr_library(
-   avr-shift-registers
+   avr_shift_registers
    util.c
    shift_register.c
    piso_shift_register.c

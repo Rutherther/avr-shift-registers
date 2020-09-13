@@ -1,8 +1,8 @@
 #include "shift_register_internal.h"
 #include <stdlib.h>
 
-const DataPosition* data_position_create(volatile byte* ddr, volatile byte* port, volatile byte* pin, byte position) {
-    DataPosition* dp = malloc(sizeof(DataPosition));
+DataPosition* data_position_create(volatile byte* ddr, volatile byte* port, volatile byte* pin, byte position) {
+    DataPosition* dp = (DataPosition*) malloc(sizeof(DataPosition));
     dp->ddr = ddr;
     dp->port = port;
     dp->pin = pin;

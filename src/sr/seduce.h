@@ -47,7 +47,7 @@ typedef unsigned char byte;
  *  data_position_create(&DDRA, &PORTA, &PINA, 1); // Pass position 1 of PINA
  * @endcode
  */
-typedef struct {
+typedef struct DataPosition {
     volatile byte* ddr;
     volatile byte* port;
     volatile byte* pin;
@@ -64,7 +64,7 @@ typedef struct {
  * @return DataPosition 
  * @note 0 is for LSB. 7 is for MSB. PORTA1 can be used.
  */
-extern const DataPosition* data_position_create(volatile byte* ddr, volatile byte* port, volatile byte* pin, byte position);
+extern DataPosition* data_position_create(volatile byte* ddr, volatile byte* port, volatile byte* pin, byte position);
 
 /**
  * @brief Destroy DataPosition
