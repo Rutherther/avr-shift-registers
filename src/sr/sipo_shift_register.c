@@ -74,4 +74,5 @@ void avr_sipo_shift_register_reset(const SipoShiftRegister shiftRegister)
     avr_shift_register_disable_clock(shiftRegister.shiftRegister);
     sleep(shiftRegister.shiftRegister.waitTime);
     avr_shift_register_enable_clock(shiftRegister.shiftRegister);
+    sleep(shiftRegister.shiftRegister.waitTime);
 }

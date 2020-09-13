@@ -19,6 +19,7 @@ void avr_shift_register_clock_pulse(ShiftRegister shiftRegister)
     data_position_set_port(shiftRegister.clockPulse);
     sleep(shiftRegister.waitTime);
     data_position_reset_port(shiftRegister.clockPulse);
+    sleep(shiftRegister.waitTime);
 }
 
 void avr_shift_register_enable_clock(ShiftRegister shiftRegister)

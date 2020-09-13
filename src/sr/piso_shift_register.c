@@ -32,6 +32,7 @@ void avr_piso_shift_register_parallel_load(const PisoShiftRegister shiftRegister
     data_position_reset_port(shiftRegister.parallelLoad);
     sleep(shiftRegister.shiftRegister.waitTime);
     data_position_set_port(shiftRegister.parallelLoad);
+    sleep(shiftRegister.shiftRegister.waitTime);
 }
 
 void avr_piso_shift_register_shift(const PisoShiftRegister shiftRegister)
