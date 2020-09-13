@@ -1,42 +1,28 @@
 #ifndef _SHIFT_REGISTERS_SEDUCE
 #define _SHIFT_REGISTERS_SEDUCE
 
-// TODO: make this working with flash memory so the data is not placed on RAM
-// TODO: assume PINB is x. then DDRB is x + 1 and PORTB is x + 2.
+#ifndef SR_DDR_OFFSET
+    #define SR_DDR_OFFSET 1
+#endif
 
-/**
- * @file seduce.h
- * @author Rutherther
- * @date 9 Sep 2020
- * @brief File containing public exports of the library.
- * 
- * This header should be included in projects that use this library.
- * There aren't any other headers that should be imported.
- * Other headers suffixed using _internal should be used only
- * internally from within the library.
- * 
- * @see DataPosition
- * @see ShiftRegisterHandle
- */
+#ifndef SR_PORT_OFFSET
+    #define SR_PORT_OFFSET 2
+#endif
 
-/**
- * @brief Handle to work with the shift registers.
- * 
- * This handle can be obtained using @see avr_piso_shift_register_init for PISO
- * or @see avr_sipo_shift_register_init for SIPO.
- * PISO stands for parallel-in/serial-out (used for getting input from shift register).
- * SIPO stands for serial-in/parallel-out (used for passing output using shift register).
- * 
- */
-typedef void* ShiftRegisterHandle;
 typedef unsigned char bool;
 typedef unsigned char byte;
 
 /**
  * @brief Hold data port info.
  * 
- * Structure used to hold DDR, PORT and PIN registers
+ * Structure used to hold PIN registers
  * along with a bit position.
+ * 
+ * DDR and PORT registers will be automatically located
+ * to save some RAM. offset of DDR can be set
+ * using #define SR_DDR_OFFSET (default 1). For PORT use
+ * #define SR_PORT_OFFSET (default 2). This number is then
+ * added to the PIN address
  * 
  * Can be used to dynamically save a position of I/O .
  * 
@@ -44,34 +30,51 @@ typedef unsigned char byte;
  * 
  * Example usage:
  * @code
- *  data_position_create(&DDRA, &PORTA, &PINA, 1); // Pass position 1 of PINA
+ *  data_position_create(&PINA, 1); // Pass position 1 of PINA
  * @endcode
  */
 typedef struct DataPosition {
-    volatile byte* ddr;
-    volatile byte* port;
     volatile byte* pin;
     byte position;
 } DataPosition;
 
+typedef enum {
+    SR_PISO,
+    SR_SIPO
+} ShiftRegisterTypeHeader;
+
+typedef struct {
+    const ShiftRegisterTypeHeader type;
+    const DataPosition clockEnable;
+    const DataPosition clockPulse;
+    int waitTime;
+} ShiftRegister;
+
+typedef struct {
+    const ShiftRegister shiftRegister;
+    const DataPosition output;
+    const DataPosition parallelLoad;
+} PisoShiftRegister;
+
+typedef struct {
+    const ShiftRegister shiftRegister;
+    const DataPosition input;
+    const DataPosition outputEnable;
+    const DataPosition pushOutput;
+} SipoShiftRegister;
+
 /**
  * @brief Create DataPosition struct.
  * 
- * @param ddr Pointer to DDR register (for example &DDRA).
- * @param port Pointer to PORT register (for example &PORTA).
+ * Pointers to PORT and DDR are automatically calculated.
+ * Check out DataPosition documentation for more information.
+ * 
  * @param pin Pointer to PIN register (for example &PINA).
  * @param position Position within the register. 
  * @return DataPosition 
  * @note 0 is for LSB. 7 is for MSB. PORTA1 can be used.
  */
-extern DataPosition* data_position_create(volatile byte* ddr, volatile byte* port, volatile byte* pin, byte position);
-
-/**
- * @brief Destroy DataPosition
- * 
- * @param position 
- */
-extern void data_position_destroy(const DataPosition* position);
+extern const DataPosition data_position_create(volatile byte* pin, byte position);
 
 /**
  * @brief Get PIN value of DataPosition.
@@ -80,7 +83,7 @@ extern void data_position_destroy(const DataPosition* position);
  * @return true When PIN (input) is HIGH.
  * @return false When PIN (input) is LOW.
  */
-extern bool data_position_get_pin(const DataPosition* position);
+extern bool data_position_get_pin(const DataPosition position);
 
 /**
  * @brief Set PORT value of DataPosition.
@@ -91,7 +94,7 @@ extern bool data_position_get_pin(const DataPosition* position);
  * 
  * @param position 
  */
-extern void data_position_set_port(const DataPosition* position);
+extern void data_position_set_port(const DataPosition position);
 
 /**
  * @brief Reset PORT value of DataPosition.
@@ -102,7 +105,7 @@ extern void data_position_set_port(const DataPosition* position);
  * 
  * @param position 
  */
-extern void data_position_reset_port(const DataPosition* position);
+extern void data_position_reset_port(const DataPosition position);
 
 /**
  * @brief Set DDR value of DataPosition
@@ -111,7 +114,7 @@ extern void data_position_reset_port(const DataPosition* position);
  * 
  * @param position 
  */
-extern void data_position_set_ddr(const DataPosition* position);
+extern void data_position_set_ddr(const DataPosition position);
 
 /**
  * @brief Reset DDR value of DataPosition.
@@ -120,7 +123,7 @@ extern void data_position_set_ddr(const DataPosition* position);
  * 
  * @param position 
  */
-extern void data_position_reset_ddr(const DataPosition* position);
+extern void data_position_reset_ddr(const DataPosition position);
 
 /*******************************************************************************
  *                                                                             *
@@ -130,14 +133,36 @@ extern void data_position_reset_ddr(const DataPosition* position);
  *******************************************************************************/
 
 /**
+ * @brief Create shift register.
+ * 
+ * This function creates generic shift register.
+ * Functions beginning with avr_piso_shift_register may be used
+ * with this type of ShiftRegister.
+ * 
+ * @param type
+ * @param clockEnable
+ * @param clockPulse
+ * @param waitTime
+ * @return ShiftRegister 
+ * 
+ * @note You should always init the shift register after creating it. Use @see avr_piso_shift_register_init.
+ */
+extern const ShiftRegister avr_shift_register_create(
+    ShiftRegisterTypeHeader type,
+    const DataPosition clockEnable,
+    const DataPosition clockPulse,
+    int waitTime
+);
+
+/**
  * @brief Send clock pulse to shift register.
  * 
  * This function makes the clockPulse position HIGH for specified waitTime
  * Then makes it LOW again.`
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister
  */
-extern void avr_shift_register_clock_pulse(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_shift_register_clock_pulse(const ShiftRegister shiftRegister);
 
 /**
  * @brief Enable shift register clock.
@@ -149,10 +174,10 @@ extern void avr_shift_register_clock_pulse(ShiftRegisterHandle shiftRegisterHand
  * For SIPO registers if clockEnable is made low
  * the register is also cleared.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister
  * @note This function will be called in the init function.
  */
-extern void avr_shift_register_enable_clock(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_shift_register_enable_clock(const ShiftRegister shiftRegister);
 
 /**
  * @brief Disable shift register clock.
@@ -162,9 +187,9 @@ extern void avr_shift_register_enable_clock(ShiftRegisterHandle shiftRegisterHan
  * 
  * @note some SIPO registers can be cleared using this function.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister
  */
-extern void avr_shift_register_disable_clock(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_shift_register_disable_clock(const ShiftRegister shiftRegister);
 
 /*******************************************************************************
  *                                                                             *
@@ -186,15 +211,15 @@ extern void avr_shift_register_disable_clock(ShiftRegisterHandle shiftRegisterHa
  * @param output Can be specified as Q7 in datasheet. Be careful not to use negative Q7.
  * @param parallelLoad Can be specified as PL.
  * @param waitTime Used to wait when pulsing the clock
- * @return ShiftRegisterHandle 
+ * @return PisoShiftRegister 
  * 
  * @note You should always init the shift register after creating it. Use @see avr_piso_shift_register_init.
  */
-extern ShiftRegisterHandle avr_piso_shift_register_create(
-    const DataPosition* clockEnable,
-    const DataPosition* clockPulse,
-    const DataPosition* output,
-    const DataPosition* parallelLoad,
+extern const PisoShiftRegister avr_piso_shift_register_create(
+    const DataPosition clockEnable,
+    const DataPosition clockPulse,
+    const DataPosition output,
+    const DataPosition parallelLoad,
     int waitTime
 );
 
@@ -206,16 +231,9 @@ extern ShiftRegisterHandle avr_piso_shift_register_create(
  * 
  * @see avr_shift_register_enable_clock is also called to enable the clock.
  * 
- * @param shiftRegisterHandle
+ * @param shiftRegister
  */
-extern void avr_piso_shift_register_init(ShiftRegisterHandle shiftRegisterHandle);
-
-/**
- * @brief Destroy and free PISO shift register memory
- * 
- * @param shiftRegisterHandle 
- */
-extern void avr_piso_shift_register_destroy(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_piso_shift_register_init(const PisoShiftRegister shiftRegister);
 
 /**
  * @brief Asynchronously load the data
@@ -225,9 +243,9 @@ extern void avr_piso_shift_register_destroy(ShiftRegisterHandle shiftRegisterHan
  * PL port will be set LOW and then back
  * HIGH after waitTime has passed.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_piso_shift_register_parallel_load(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_piso_shift_register_parallel_load(const PisoShiftRegister shiftRegister);
 
 /**
  * @brief Shift next bit
@@ -235,9 +253,9 @@ extern void avr_piso_shift_register_parallel_load(ShiftRegisterHandle shiftRegis
  * This function shifts next bit from the PISO shift register.
  * It just makes the clockPulse HIGH and then LOW.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_piso_shift_register_shift(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_piso_shift_register_shift(const PisoShiftRegister shiftRegister);
 
 /**
  * @brief Read current bit
@@ -247,11 +265,11 @@ extern void avr_piso_shift_register_shift(ShiftRegisterHandle shiftRegisterHandl
  * 
  * @note You can read the whole byte using @see avr_piso_shift_register_read_byte
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  * @return true 
  * @return false 
  */
-extern bool avr_piso_shift_register_read_bit(ShiftRegisterHandle shiftRegisterHandle);
+extern bool avr_piso_shift_register_read_bit(const PisoShiftRegister shiftRegister);
 
 /**
  * @brief Read byte from the shift register
@@ -261,10 +279,10 @@ extern bool avr_piso_shift_register_read_bit(ShiftRegisterHandle shiftRegisterHa
  * 
  * @note You can read one bit using @see avr_piso_shift_register_read_bit
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  * @return byte 
  */
-extern byte avr_piso_shift_register_read_byte(ShiftRegisterHandle shiftRegisterHandle);
+extern byte avr_piso_shift_register_read_byte(const PisoShiftRegister shiftRegister);
 
 /*******************************************************************************
  *                                                                             *
@@ -291,12 +309,12 @@ extern byte avr_piso_shift_register_read_byte(ShiftRegisterHandle shiftRegisterH
  * 
  * @note You should always init the shift register after creating it. Use @see avr_sipo_shift_register_init.
  */
-extern ShiftRegisterHandle avr_sipo_shift_register_create(
-    const DataPosition* clockEnable, // SRCLR
-    const DataPosition* clockPulse, // SRCLK
-    const DataPosition* input, // SER
-    const DataPosition* outputEnable, // OE
-    const DataPosition* pushOutput, // RCLK
+extern const SipoShiftRegister avr_sipo_shift_register_create(
+    const DataPosition clockEnable, // SRCLR
+    const DataPosition clockPulse, // SRCLK
+    const DataPosition input, // SER
+    const DataPosition outputEnable, // OE
+    const DataPosition pushOutput, // RCLK
     int waitTime
 );
 
@@ -308,16 +326,9 @@ extern ShiftRegisterHandle avr_sipo_shift_register_create(
  * 
  * @see avr_shift_register_enable_clock is also called to enable the clock.
  * 
- * @param shiftRegisterHandle
+ * @param shiftRegister
  */
-extern void avr_sipo_shift_register_init(ShiftRegisterHandle shiftRegisterHandle);
-
-/**
- * @brief Destroy and free SIPO shift register memory
- * 
- * @param shiftRegisterHandle 
- */
-extern void avr_sipo_shift_register_destroy(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_init(const SipoShiftRegister shiftRegister);
 
 /**
  * @brief Shifts data by one position.
@@ -325,9 +336,9 @@ extern void avr_sipo_shift_register_destroy(ShiftRegisterHandle shiftRegisterHan
  * This function shifts next bit from the PISO shift register.
  * It just makes the clockPulse HIGH and then LOW.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_sipo_shift_register_shift(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_shift(const SipoShiftRegister shiftRegister);
 
 /**
  * @brief Write one bit to the shift register.
@@ -337,11 +348,11 @@ extern void avr_sipo_shift_register_shift(ShiftRegisterHandle shiftRegisterHandl
  * 
  * @note You can read the whole byte using @see avr_sipo_shift_register_write_byte
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  * @param data 
  * @param position 
  */
-extern void avr_sipo_shift_register_write_bit(ShiftRegisterHandle shiftRegisterHandle, byte data, int position);
+extern void avr_sipo_shift_register_write_bit(const SipoShiftRegister shiftRegister, byte data, int position);
 
 /**
  * @brief Write whole byte to the shift register.
@@ -351,10 +362,10 @@ extern void avr_sipo_shift_register_write_bit(ShiftRegisterHandle shiftRegisterH
  * 
  * @note You can write only one bit using @see avr_sipo_shift_register_write_bit
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  * @param data 
  */
-extern void avr_sipo_shift_register_write_byte(ShiftRegisterHandle shiftRegisterHandle, byte data);
+extern void avr_sipo_shift_register_write_byte(const SipoShiftRegister shiftRegister, byte data);
 
 /**
  * @brief Enable output DataPosition
@@ -362,9 +373,9 @@ extern void avr_sipo_shift_register_write_byte(ShiftRegisterHandle shiftRegister
  * This function enables the output so the shift register
  * outputs the data shifted in it.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_sipo_shift_register_enable_output(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_enable_output(const SipoShiftRegister shiftRegister);
 
 /**
  * @brief Disable output DataPosition
@@ -372,9 +383,9 @@ extern void avr_sipo_shift_register_enable_output(ShiftRegisterHandle shiftRegis
  * This function disables the output so the shift register
  * doesn't output anything.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_sipo_shift_register_disable_output(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_disable_output(const SipoShiftRegister shiftRegister);
 
 /**
  * @brief Psuh data to output
@@ -383,9 +394,9 @@ extern void avr_sipo_shift_register_disable_output(ShiftRegisterHandle shiftRegi
  * to the storage register. That means the data you shift
  * in will be set only after you call this function.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_sipo_shift_register_push_data_to_output(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_push_data_to_output(const SipoShiftRegister shiftRegister);
 
 /**
  * @brief Disable and enable clock to reset the SR value
@@ -394,8 +405,8 @@ extern void avr_sipo_shift_register_push_data_to_output(ShiftRegisterHandle shif
  * and enables the clock. Doing that the register will
  * be reset.
  * 
- * @param shiftRegisterHandle 
+ * @param shiftRegister 
  */
-extern void avr_sipo_shift_register_reset(ShiftRegisterHandle shiftRegisterHandle);
+extern void avr_sipo_shift_register_reset(const SipoShiftRegister shiftRegister);
 
 #endif

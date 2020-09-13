@@ -3,32 +3,30 @@
 #include <util/delay.h>
 #include <stdlib.h>
 
-void avr_shift_register_destroy(ShiftRegisterHandle shiftRegisterHandle)
+const ShiftRegister avr_shift_register_create(
+    ShiftRegisterTypeHeader type,
+    const DataPosition clockEnable,
+    const DataPosition clockPulse,
+    int waitTime
+)
 {
-    free((ShiftRegister*) shiftRegisterHandle);
+    ShiftRegister sr = { type, clockEnable, clockPulse, waitTime };
+    return sr;
 }
 
-void avr_shift_register_clock_pulse(ShiftRegisterHandle shiftRegisterHandle)
-{
-    ShiftRegister* sr = (ShiftRegister*) shiftRegisterHandle;
-    
-    data_position_set_port(sr->clockPulse);
-    _delay_ms(1);
-    data_position_reset_port(sr->clockPulse);
+void avr_shift_register_clock_pulse(ShiftRegister shiftRegister)
+{    
+    data_position_set_port(shiftRegister.clockPulse);
+    sleep(shiftRegister.waitTime);
+    data_position_reset_port(shiftRegister.clockPulse);
 }
 
-void avr_shift_register_enable_clock(ShiftRegisterHandle shiftRegisterHandle)
+void avr_shift_register_enable_clock(ShiftRegister shiftRegister)
 {
-    ShiftRegister* sr = (ShiftRegister*) shiftRegisterHandle;
-    data_position_set_port(sr->clockEnable);
-
-    sr->clockEnabled = 1;
+    data_position_set_port(shiftRegister.clockEnable);
 }
 
-void avr_shift_register_disable_clock(ShiftRegisterHandle shiftRegisterHandle)
+void avr_shift_register_disable_clock(ShiftRegister shiftRegister)
 {
-    ShiftRegister* sr = (ShiftRegister*) shiftRegisterHandle;
-    data_position_reset_port(sr->clockEnable);
-
-    sr->clockEnabled = 0;
+    data_position_reset_port(shiftRegister.clockEnable);
 }
