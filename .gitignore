@@ -42,6 +42,7 @@ latex/
 *.elf
 *.lst
 *.map
+*.a
 
 commands.gdb
 *_trace.c
