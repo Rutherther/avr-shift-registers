@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "program": "simavr_shift_registers-atmega8.elf",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/simavr",
+            "serverLaunchTimeout": 10000,
+            "MIMode": "gdb",
+            "miDebuggerPath": "avr-gdb",
+            "miDebuggerServerAddress": "localhost:1234",
+            "debugServerPath": "simavr",
+            "debugServerArgs": "-t -g -m atmega8 -f 4000000UL ${workspaceRoot}/simavr/simavr_shift_registers-atmega8.elf",
+            "filterStdout": true,
+            "filterStderr": true,
+            "stopAtEntry": true,
+            "preLaunchTask": "${defaultBuildTask}"
+        }
+    ]
+}
